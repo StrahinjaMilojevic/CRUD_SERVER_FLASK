@@ -1,137 +1,120 @@
-# Web & API Test Automation Framework
+# CRUD Server (Flask + JSON Storage)
 
-Ovaj projekat je automatizovani framework za testiranje web aplikacija i API-ja.
-
-## ✅ Korišćene tehnologije
-- Python 3.10+
-- Pytest
-- Selenium WebDriver
-- Requests (API testovi)
-- Page Object Model (POM)
-- ChromeDriver / GeckoDriver
+Ovaj projekat predstavlja jednostavan **CRUD API server** baziran na Flask framework-u.
+Podaci se čuvaju u lokalnom JSON fajlu i server omogućava manipulaciju tim podacima kroz REST API.
 
 ---
 
-## 📁 Struktura projekta
+## 🧠 Arhitektura sistema
+
+Aplikacija je organizovana modularno po odgovornostima:
 
 ```
-project/
-│── tests/
-│   ├── web/
-│   │   └── test_login.py
-│   ├── api/
-│   │   └── test_users_api.py
-│   └── data/
-│       └── testdata.json
+CRUD_SERVER_FLASK/
 │
-│── pages/
-│   └── loginpage.py
-│
-│── logic/
-│   └── models.py
-│
-│── conftest.py
-│── requirements.txt
-│── README.md
+├── main.py                # Ulazna tačka aplikacije (pokreće server)
+├── requirements.txt       # Python dependencije
+├── README.md              # Dokumentacija sistema
+└── src/
+    ├── app.py             # Flask inicijalizacija + registracija ruta
+    │
+    ├── models/
+    │   └── models.py      # Funkcije za rad sa JSON fajlom (load/save)
+    │
+    ├── routes/
+    │   └── routes1.py     # Definicija CRUD API ruta (POST/GET/PUT/DELETE)
+    │
+    └── data/
+        └── data.json      # JSON storage baza (isključeno iz Gita)
 ```
 
 ---
 
-## ✅ Instalacija okruženja
+## 🔁 Tok podataka (kako sistem radi)
 
-### 1. Kloniranje projekta
-```bash
-git clone <git-repository-url>
-cd project
+1. Korisnik pošalje HTTP zahtev ka API-ju (`POST`, `GET`, `PUT`, `DELETE`)
+2. `routes1.py` prima zahtev → validira podatke → poziva `models.py`
+3. `models.py`:
+   - učitava postojeće podatke iz `data.json`
+   - modifikuje ih u memoriji (lista/dict)
+   - čuva nove vrednosti u `data.json`
+4. API vraća HTTP odgovor u JSON formatu
+
+**Primer toka (POST → CREATE item):**
+
 ```
-
-### 2. Kreiranje virtualnog okruženja
-
-#### Windows
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-#### macOS / Linux
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Instalacija dependencija
-```bash
-pip install -r requirements.txt
+[Klijent] → POST /items → [routes1.py] → [models.py] → data.json → odgovor klijentu
 ```
 
 ---
 
-## ▶️ Pokretanje testova
+## 📦 Models (`models/models.py`)
 
-Pokretanje svih testova:
-```bash
-pytest
-```
+Model je zadužen za rad sa skladištenjem podataka:
 
-Pokretanje samo web testova:
-```bash
-pytest tests/web -v
-```
+- `load_data()` — čita JSON fajl i vraća Python listu
+- `save_data(data)` — upisuje Python listu nazad u JSON fajl
+- API nikad ne zna gde se podaci nalaze → komunikacija ide isključivo kroz model
 
-Pokretanje samo API testova:
-```bash
-pytest tests/api -v
-```
+Ovaj pristup omogućava kasniji prelazak na bazu (npr. SQLite ili PostgreSQL) **bez menjanja ruta**.
 
-Generisanje HTML izveštaja:
-```bash
-pytest --html=report.html
+---
+
+## 🌐 API endpointi
+
+| Metoda | Endpoint        | Opis operacije                     |
+|--------|----------------|-------------------------------------|
+| GET    | `/items`       | Vraća sve item-e                    |
+| POST   | `/items`       | Kreira novi item                    |
+| GET    | `/items/<id>`  | Vraća item po ID-u                  |
+| PUT    | `/items/<id>`  | Ažurira postojeći item              |
+| DELETE | `/items/<id>`  | Briše item                           |
+
+**Primer JSON objekta u `data.json`:**
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Marko",
+    "email": "marko@example.com"
+  }
+]
 ```
 
 ---
 
-## 🔧 Podešavanje WebDriver-a
+## 🚀 Pokretanje servera
 
-Preporučeno korišćenje webdriver-manager:
-
-```python
-from webdriver_manager.chrome import ChromeDriverManager
-driver = webdriver.Chrome(ChromeDriverManager().install())
+```bash
+python main.py
 ```
 
-Ako želiš manuelno preuzimanje drivera:
-- ChromeDriver → https://chromedriver.chromium.org/downloads
-- GeckoDriver → https://github.com/mozilla/geckodriver/releases
+Server se pokreće na:
 
----
-
-## 🧪 Primer — Page Object Model
-
-**pages/loginpage.py**
-```python
-class LoginPage:
-    def __init__(self, driver):
-        self.driver = driver
-
-    def login(self, username, password):
-        self.driver.find_element(...).send_keys(username)
-        self.driver.find_element(...).send_keys(password)
-        self.driver.find_element(...).click()
+```
+http://127.0.0.1:5000
 ```
 
 ---
 
-## 🧪 Primer — API test
+## ❗ Napomena
 
-**tests/api/test_users_api.py**
-```python
-def test_get_users():
-    response = requests.get("https://reqres.in/api/users?page=1")
-    assert response.status_code == 200
+📌 `data.json` je izbačen iz Git repozitorijuma jer predstavlja runtime storage.
+
+```
+.gitignore → src/data/data.json
 ```
 
 ---
 
-## ✔️ Autor
-Strahinja Milojevic 
-QA Automation Engineer
+## 📌 Cilj projekta
+
+- Naučiti backend strukturu REST API-ja
+- Primeniti modularizaciju projekta (routes / models / app)
+- Kreirati server koji radi bez baze (JSON storage)
+
+---
+
+➡ Sistem je spreman za proširenje na pravu bazu (SQL).
+
